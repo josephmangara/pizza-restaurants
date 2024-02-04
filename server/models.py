@@ -1,6 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
-from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
 
@@ -13,7 +12,7 @@ class Restaurant(db.Model):
 
     restaurant_pizzas = db.relationship('RestaurantPizza', backref="restaurant")
 
-class Pizza(db.Model, SerializerMixin):
+class Pizza(db.Model):
     __tablename__ = 'pizzas'
 
     serialize_rules = ('-restaurant_pizzas.pizza',) 
@@ -26,20 +25,8 @@ class Pizza(db.Model, SerializerMixin):
 
     restaurant_pizzas = db.relationship('RestaurantPizza', backref="pizza")
 
-    def serialize(self):
-        
-        return {
-            "id": self.id,
-            "name": self.name,
-            "ingredients": self.ingredients,
-            "created_at": self.created_at,
-             "updated_at": self.updated_at
-        }
-
-class RestaurantPizza(db.Model, SerializerMixin):
+class RestaurantPizza(db.Model):
     __tablename__ = 'restaurant_pizzas'
-
-    serialize_rules = ('-pizza.restaurant_pizzas',)
 
     id = db.Column(db.Integer, primary_key=True) 
     price = db.Column(db.String)
@@ -53,13 +40,3 @@ class RestaurantPizza(db.Model, SerializerMixin):
         if value < 1 and value > 30:
             raise ValueError("The price should be between $1 and $30.")
         return value 
-    
-    def serialize(self):
-        return {
-            "id": self.id,
-            "price": self.price,
-            "pizza_id": self.pizza_id,
-            "restaurant_id": self.restaurant_id,
-            "created_at": self.created_at,
-             "updated_at": self.updated_at
-        }
