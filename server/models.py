@@ -29,7 +29,7 @@ class RestaurantPizza(db.Model):
     __tablename__ = 'restaurant_pizzas'
 
     id = db.Column(db.Integer, primary_key=True) 
-    price = db.Column(db.String)
+    price = db.Column(db.Integer)
     pizza_id = db.Column(db.Integer, db.ForeignKey("pizzas.id"))
     restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurants.id"))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
@@ -37,6 +37,6 @@ class RestaurantPizza(db.Model):
 
     @validates('price')
     def validate_price(self, key, value):
-        if value < 1 and value > 30:
+        if value < 1 or value > 30:
             raise ValueError("The price should be between $1 and $30.")
         return value 

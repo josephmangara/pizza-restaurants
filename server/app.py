@@ -125,33 +125,57 @@ class Pizzas(Resource):
 api.add_resource(Pizzas, '/pizzas')
 
 class RestaurantPizzas(Resource):
-    def post(self):
-        if pizza == 201:
-            new_pizza_restaurant = RestaurantPizza(
-                price=request.form['price'],
-                pizza_id=request.form['pizza_id'],
-                restaurant_id=request.form['restaurant_id'],
-            ) 
-            db.session.add(new_pizza_restaurant)
-            db.session.commit()
+    def post(self): 
+        pizza = request.get_json()
 
-            for pizza in Pizza.query.all():
-                response_dict = {
-                    "id": pizza.id,
-                    "name": pizza.name,
-                    "ingredients": pizza.ingredients
-                }
+        price = pizza.get('price')
+        pizza_id = pizza.get('pizza_id')
+        restaurant_id = pizza.get('restaurant_id')
+
+        if price is None or pizza_id is None or restaurant_id is None:
+            response = make_response(
+                jsonify({"errors": ["Validation errors: Missing required fields"]}),
+                400,
+            )
+            return response
+
+        new_pizza_restaurant = RestaurantPizza(
+            price=price,
+            pizza_id=pizza_id,
+            restaurant_id=restaurant_id,
+        )
+        db.session.add(new_pizza_restaurant)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            response = make_response(
+                jsonify({"errors": ["Validation errors: Failed to create RestaurantPizza"]}),
+                400,
+            )
+            return response
+    
+        pizza = Pizza.query.filter_by(id=pizza_id).first()
+
+        if pizza:
+            response_dict = {
+                "id": pizza.id,
+                "name": pizza.name,
+                "ingredients": pizza.ingredients
+            }
             response = make_response(
                 jsonify(response_dict),
                 201,
             )
-            return response 
+            return response
         else:
             response = make_response(
-                jsonify({"errors": ["validation errors"]}),
-                205,)
-
-api.resource(RestaurantPizzas, '/restaurant_pizzas')
+                jsonify({"errors": ["Validation errors: Pizza not found"]}),
+                400,
+            )
+            return response
+        
+api.add_resource(RestaurantPizzas, '/restaurant_pizzas')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
